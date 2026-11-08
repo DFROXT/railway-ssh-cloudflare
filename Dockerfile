@@ -1,27 +1,23 @@
 FROM debian:12-slim
-ARG TARGETARCH=amd64
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    openssh-server curl ca-certificates sudo \
+    openssh-server curl ca-certificates gnupg sudo \
     && rm -rf /var/lib/apt/lists/*
 
-# chisel (WebSocket <-> TCP bridge) - pinned + retries
-RUN curl -fsSL --retry 5 --retry-delay 3 --max-time 180 -o /tmp/chisel.gz \
-      "https://github.com/jpillora/chisel/releases/download/v1.12.0/chisel_1.12.0_linux_${TARGETARCH}.gz" \
-    && gunzip -c /tmp/chisel.gz > /usr/local/bin/chisel \
-    && chmod +x /usr/local/bin/chisel
+# ngrok via official apt repo
+RUN curl -fsSL --retry 5 --retry-delay 3 https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
+      | tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null \
+    && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" > /etc/apt/sources.list.d/ngrok.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends ngrok \
+    && rm -rf /var/lib/apt/lists/*
 
-# cloudflared - PINNED version (avoids the 'latest' redirect which returns 502/504)
-RUN curl -fsSL --retry 5 --retry-delay 3 --max-time 180 -o /usr/local/bin/cloudflared \
-      "https://github.com/cloudflare/cloudflared/releases/download/2026.10.7/cloudflared-linux-${TARGETARCH}" \
-    && chmod +x /usr/local/bin/cloudflared
+# ngrok authtoken (hardcoded)
+RUN ngrok config add-authtoken 2qemlkWYtoHWjZJNT5cjdmJXH3n_6diF7ZQq3Uietkua8M1d
 
-# ---- HARDCODED LOGIN (change these lines if you want) ----
-RUN useradd -m -s /bin/bash vps \
-    && echo 'vps:vps12345' | chpasswd \
-    && echo 'root:root12345' | chpasswd
-# ----------------------------------------------------------
+# ---- HARDCODED LOGIN ----
+RUN echo 'root:dev' | chpasswd
 
 RUN sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config \
     && sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config \
