@@ -1,35 +1,30 @@
-# railway-ssh-vps
+# railway-ssh-vps (ngrok)
 
-Railway VPS with SSH login. No environment variables — everything is hardcoded.
+Railway VPS with SSH login via an **ngrok TCP tunnel**. No env variables — everything is hardcoded in the image.
 
 ## Deploy
-1. Railway -> New Project -> Deploy from GitHub -> select this repo.
-2. Deploy. That's it.
+1. Railway → New Project → Deploy from GitHub → pick this repo.
+2. Deploy. Done.
 
-## Login (fixed in repo)
-- user: `vps`
-- pass: `vps12345`
-- root: `root12345`
+## Login (hardcoded)
+- user: `root` / pass: `dev`
 
-## After deploy
-Railway logs me ye aayega:
+## After deploy — read Railway logs
+Logs print something like:
 
 ```
- DOMAIN: https://xxxx.trycloudflare.com
- SSH USER: vps   PASS: vps12345
+==================================================
+ SSH : ssh -p 12345 root@0.tcp.ngrok.io
+ USER: root   PASS: dev
+==================================================
 ```
 
-## Connect from your PC
+Then run exactly that command from your machine:
+
 ```
-chisel client --auth tunnel:tunnel12345 https://xxxx.trycloudflare.com 2223:localhost:22
-ssh -p 2223 vps@127.0.0.1
+ssh -p <PORT> root@<HOST>
 ```
 
-## Change login
-`Dockerfile` me ye line edit karo:
-```
-RUN useradd -m -s /bin/bash vps \
-    && echo 'vps:vps12345' | chpasswd \
-    && echo 'root:root12345' | chpasswd
-```
-Aur `start.sh` me `SSH_USER` / `SSH_PASSWORD` / `CHISEL_USER` / `CHISEL_PASS` values badal do.
+Enter password `dev`.
+
+> Note: ngrok free URL changes on every restart/redeploy. Re-read the logs after each deploy.
