@@ -6,13 +6,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-server curl ca-certificates sudo \
     && rm -rf /var/lib/apt/lists/*
 
-# chisel (WebSocket <-> TCP bridge)
-RUN curl -fsSL --max-time 120 -o /tmp/chisel.gz "https://github.com/jpillora/chisel/releases/download/v1.12.0/chisel_1.12.0_linux_${TARGETARCH}.gz" \
+# chisel (WebSocket <-> TCP bridge) - pinned + retries
+RUN curl -fsSL --retry 5 --retry-delay 3 --max-time 180 -o /tmp/chisel.gz \
+      "https://github.com/jpillora/chisel/releases/download/v1.12.0/chisel_1.12.0_linux_${TARGETARCH}.gz" \
     && gunzip -c /tmp/chisel.gz > /usr/local/bin/chisel \
     && chmod +x /usr/local/bin/chisel
 
-# cloudflared
-RUN curl -fsSL --max-time 120 -o /usr/local/bin/cloudflared "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${TARGETARCH}" \
+# cloudflared - PINNED version (avoids the 'latest' redirect which returns 502/504)
+RUN curl -fsSL --retry 5 --retry-delay 3 --max-time 180 -o /usr/local/bin/cloudflared \
+      "https://github.com/cloudflare/cloudflared/releases/download/2026.10.7/cloudflared-linux-${TARGETARCH}" \
     && chmod +x /usr/local/bin/cloudflared
 
 # ---- HARDCODED LOGIN (change these lines if you want) ----
